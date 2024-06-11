@@ -1,0 +1,120 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<PageTitle>Order</PageTitle>
+
+<h1>Order</h1>
+
+<p>New Order</p>
+
+<div class="container p-xl-5 p-lg-4 p-md-3 p-sm-2 ">
+    <div class="card p-1 shadow">
+
+
+    @if (orders == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+            <RadzenTextBox @bind-Value=@searchOrder TValue="string" Change=@OnSearch />
+
+
+        <RadzenDataGrid Data="@orders" AllowSorting="true" TItem="Order"
+                        PageSize=10 
+                        AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Center"
+                        ShowPagingSummary="true" SelectionMode="DataGridSelectionMode.Single"
+                        AllowFiltering="true" AllowColumnResize="true" ColumnWidth="100px"
+                        AllowAlternatingRows="true">
+            <Columns>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Date" Filterable="true" Title="Date" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Email" Filterable="true" Title="Email" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Phone" Filterable="true" Title="Phone" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="OrderNumber" Filterable="true" Title="Order Number" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Quantity" Filterable="true" Title="Quantity" TextAlign="TextAlign.Center"></RadzenDataGridColumn>
+
+                         <RadzenDataGridColumn TItem="Order" Sortable="true" Property="Quantity" Filterable="true" Title="View Order" TextAlign="TextAlign.Center">
+                        <Template Context="order">
+
+                            <RadzenButton Icon="assignment" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium">
+                            </RadzenButton>
+
+                           
+
+                        </Template>
+
+                        <EditTemplate Context="order">
+
+                            <RadzenButton Icon="view" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" aria-label="view">
+                            </RadzenButton>
+
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1"  aria-label="Cancel">
+                            </RadzenButton>
+                            
+                        </EditTemplate>
+
+                         </RadzenDataGridColumn>
+
+
+                    
+
+            </Columns>
+        </RadzenDataGrid>
+        }
+    </div>
+
+</div>
+
+@code {
+    private IEnumerable<Order> orders;
+    private IEnumerable<Order> originalOrder;
+
+    private string searchOrder;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await Http.GetFromJsonAsync<IEnumerable<Order>>("sample-data/neworders.json");
+        originalOrder = orders;
+    }
+
+
+    public class Order
+    {
+
+
+        public DateOnly Date { get; set; }
+
+        public string? Name { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Phone { get; set; }
+
+        public string? OrderNumber { get; set; }
+
+        public int Quantity { get; set; }
+
+    }
+
+    void OnSearch(string Value)
+    {
+        var args = new LoadDataArgs
+            {
+                Filter = @$"(Name == null ? """" : Name).Contains(""{Value}"") OR (Email == null ? """" : Email).Contains(""{Value}"")"
+            };
+        if (Value == "" || Value == null)
+            orders = originalOrder; 
+        else
+            {
+                LoadData(Value);
+
+            }
+    }
+
+    void LoadData(string value) => orders = orders.Where<Order>(x => x.Email.Contains(value,StringComparison.InvariantCultureIgnoreCase) || 
+                                                                x.Name.Contains(value,StringComparison.InvariantCultureIgnoreCase) || 
+                                                                x.OrderNumber.Contains(value, StringComparison.InvariantCultureIgnoreCase) || 
+                                                                x.Phone.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+}
